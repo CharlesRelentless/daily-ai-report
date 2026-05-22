@@ -6,6 +6,7 @@ import json
 import requests
 import feedparser
 from datetime import datetime, timedelta
+from urllib.parse import quote
 from config import cfg
 
 
@@ -27,9 +28,11 @@ def fetch_arxiv_papers_research(max_results: int = 5) -> list[dict]:
 
 
 def _arxiv_query(query: str, max_results: int) -> list[dict]:
+    # URL 编码 query，避免空格/冒号/括号等特殊字符导致非法 URL
+    encoded_query = quote(query, safe="")
     url = (
         f"http://export.arxiv.org/api/query?"
-        f"search_query={query}"
+        f"search_query={encoded_query}"
         f"&start=0&max_results={max_results}"
         f"&sortBy=submittedDate&sortOrder=descending"
     )
