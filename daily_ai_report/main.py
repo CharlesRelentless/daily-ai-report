@@ -1,73 +1,66 @@
 #!/usr/bin/env python3
 """
-AI 前沿捕手 Agent — 主入口
-每日自动执行：采集 → 筛选 → 生成日报 → QQ邮箱 + Notion 双推送
-
-用法：
-    python main.py                  # 一次性执行
-    python main.py --dry-run        # 只生成日报，不推送
-    python main.py --local          # 仅保存本地文件，不推送
+AI 前沿日报 — 主入口
+AI HOT API → HTML 仪表盘 → Gmail 推送（自备微信提醒）
 """
 import sys
 import os
 from datetime import datetime
 
-# 确保能找到同目录模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import cfg
-from fetchers import collect_all_raw
-from pipeline import run_pipeline
-from push import send_via_qqmail, send_via_notion
+from aihot import fetch_daily_report
+from htmlgen import generate_dashboard_html, generate_email_html
+from push import send_via_qqmail  # 通用 SMTP
 
 
 def main():
     dry_run = "--dry-run" in sys.argv
-    local_only = "--local" in sys.argv
     date_str = datetime.now().strftime("%Y-%m-%d")
 
-    print("=" * 60)
-    print(f"  AI 前沿捕手 Agent — {date_str}")
-    print("=" * 60)
+    print("=" * 50)
+    print(f"  AI 前沿日报 — {date_str}")
+    print("=" * 50)
 
-    # 1. 数据采集
-    print("\n>>> 正在采集数据...")
-    raw_text = collect_all_raw()
-    print(f"    采集完成，原始文本约 {len(raw_text)} 字符")
-
-    if not raw_text.strip():
-        print("    未采集到任何数据，退出")
+    # 1. 拉取 AI HOT 日报
+    print("\n>>> 拉取 AI HOT 日报...")
+    data = fetch_daily_report()
+    if not data:
+        print("    获取失败，退出")
         return
 
-    # 2. LLM 流水线
-    print("\n>>> 启动 LLM 流水线...")
-    selected, report_md = run_pipeline(raw_text, date_str)
+    actual_date = data.get("date", date_str)
+    total = sum(len(s.get("items", [])) for s in data.get("sections", []))
+    print(f"    获取成功: {actual_date}, {total} 条")
 
-    # 3. 保存本地
+    # 2. 生成 HTML
+    print("\n>>> 生成 HTML...")
+    dashboard_html = generate_dashboard_html(data)
+    email_html = generate_email_html(data)
+
     output_dir = os.path.join(os.path.dirname(__file__), "reports")
     os.makedirs(output_dir, exist_ok=True)
-    report_path = os.path.join(output_dir, f"daily_report_{date_str}.md")
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(report_md)
-    print(f"\n>>> 日报已保存: {report_path}")
+
+    dashboard_path = os.path.join(output_dir, f"ai_daily_{actual_date}.html")
+    with open(dashboard_path, "w", encoding="utf-8") as f:
+        f.write(dashboard_html)
+    print(f"    仪表盘: {dashboard_path}")
+
+    email_path = os.path.join(output_dir, f"ai_daily_email_{actual_date}.html")
+    with open(email_path, "w", encoding="utf-8") as f:
+        f.write(email_html)
+    print(f"    邮件版: {email_path}")
 
     if dry_run:
-        print("\n[Dry Run] 跳过推送，日报内容如下：\n")
-        print(report_md)
+        print(f"\n[Dry Run] 跳过推送")
         return
 
-    if local_only:
-        print("\n[Local Only] 不推送，日报仅保存本地")
-        return
-
-    # 4. 推送
-    print("\n>>> 开始推送...")
-    qq_ok = send_via_qqmail(report_md, date_str)
-    notion_ok = send_via_notion(report_md, date_str)
-
-    print("\n" + "=" * 60)
-    print(f"  执行完毕 | QQ邮箱: {'✓' if qq_ok else '✗'} | Notion: {'✓' if notion_ok else '✗'}")
-    print("=" * 60)
+    # 3. 推送
+    print("\n>>> 推送邮件...")
+    ok = send_via_qqmail(email_html, actual_date)
+    print(f"\n{'=' * 50}")
+    print(f"  完成 | 邮件: {'✓' if ok else '✗'}")
+    print("=" * 50)
 
 
 if __name__ == "__main__":
