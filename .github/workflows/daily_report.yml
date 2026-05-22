@@ -1,0 +1,47 @@
+name: AI 前沿日报
+
+on:
+  schedule:
+    # 北京时间 14:00 = UTC 6:00，周一到周五
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r daily_ai_report/requirements.txt
+
+      - name: Run Daily AI Report
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-4o' }}
+          QQMAIL_SENDER: ${{ secrets.QQMAIL_SENDER }}
+          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
+          QQMAIL_RECEIVER: ${{ secrets.QQMAIL_RECEIVER }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          RESEARCH_KEYWORDS: ${{ secrets.RESEARCH_KEYWORDS }}
+        run: |
+          python daily_ai_report/main.py
+
+      - name: Upload Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report
+          path: daily_ai_report/reports/daily_report_*.md
+          retention-days: 7

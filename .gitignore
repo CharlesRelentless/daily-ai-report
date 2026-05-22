@@ -1,0 +1,8 @@
+# daily_ai_report/
+.env
+reports/
+__pycache__/
+*.pyc
+
+# workspace memory (private)
+.workbuddy/
