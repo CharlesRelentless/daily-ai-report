@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── 亮色模式代码高亮 ─── */
+@import "highlight.js/styles/github.css";
+
+/* ─── 暗色模式代码高亮 ─── */
+.dark {
+  @import "highlight.js/styles/github-dark.css";
+}
+
+/* ─── 基础变量 ─── */
+:root {
+  --color-primary: #ff5e3a;
+  --color-primary-dark: #e8452a;
+}
+
+/* ─── 全局样式 ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100;
+  min-height: 100vh;
+}
+
+/* ─── 滚动条美化 ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* ─── 选中文本 ─── */
+::selection {
+  @apply bg-primary-200 dark:bg-primary-800 text-primary-900 dark:text-primary-100;
+}
+
+/* ─── 文章详情内代码块特殊处理 ─── */
+.prose pre {
+  @apply !bg-gray-50 dark:!bg-gray-900 border border-gray-200 dark:border-gray-800;
+}
+.prose pre code {
+  @apply !bg-transparent !p-0 text-sm leading-relaxed;
+}
+
+/* ─── 响应式表格 ─── */
+.prose table {
+  @apply w-full overflow-x-auto block sm:table;
+}
+.prose th {
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+
+/* ─── 日报嵌入页样式适配 ─── */
+.daily-content * {
+  max-width: 100% !important;
+}
+.daily-content table {
+  width: 100% !important;
+  font-size: 13px;
+}

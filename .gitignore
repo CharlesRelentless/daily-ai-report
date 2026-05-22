@@ -4,5 +4,10 @@ reports/
 __pycache__/
 *.pyc
 
+# blog
+blog/node_modules/
+blog/.next/
+blog/package-lock.json
+
 # workspace memory (private)
 .workbuddy/
