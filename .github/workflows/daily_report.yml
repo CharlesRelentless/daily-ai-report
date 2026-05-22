@@ -6,10 +6,6 @@ on:
     - cron: "30 0 * * 1-5"
   workflow_dispatch:
 
-# 需要写入权限以提交日报到博客目录
-permissions:
-  contents: write
-
 jobs:
   daily-report:
     runs-on: ubuntu-latest
@@ -18,8 +14,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -31,35 +25,11 @@ jobs:
 
       - name: Run AI Daily Report
         env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           EMAIL_SMTP_HOST: ${{ secrets.EMAIL_SMTP_HOST }}
           EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
         run: python daily_ai_report/main.py
-
-      - name: Commit Daily Report to Blog
-        run: |
-          git config user.name "AI 捕手 Agent"
-          git config user.email "agent@ai-daily.local"
-          
-          # 只添加日报文件
-          git add blog/content/daily/*.html
-          
-          # 如果有变更则提交推送
-          if git diff --staged --quiet; then
-            echo "没有新的日报内容"
-          else
-            DATE_STR=$(date +%Y-%m-%d)
-            git commit -m "日报: ${DATE_STR} AI 前沿日报自动推送"
-            git push
-            echo "日报已提交到博客仓库"
-          fi
-
-      - name: Upload Report Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: daily-report
-          path: daily_ai_report/reports/ai_daily_*.html
-          retention-days: 7
