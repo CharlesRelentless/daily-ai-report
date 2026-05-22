@@ -1,6 +1,5 @@
-"""
-AI 前沿捕手 Agent — 推送模块
-QQ邮箱 SMTP + Notion API 双通道推送。
+"""AI 前沿日报 — 推送模块
+Notion API（主）+ QQ邮箱 SMTP（通知链接）。
 """
 import smtplib
 import traceback
@@ -10,27 +9,39 @@ from datetime import datetime
 from config import cfg
 
 
-# ═══════════════════════════════════════════════════════════════
-# QQ邮箱推送
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════
+# QQ邮箱 — 发送 Notion 链接通知
+# ═══════════════════════════════════════
 
-def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
-    """通过 SMTP 发送日报（支持 QQ邮箱 / Gmail / 任意 SMTP）。"""
+def send_via_qqmail(date_str: str, total: int, section_counts: dict, notion_url: str) -> bool:
+    """发送一封极简通知邮件，只含统计 + Notion 链接。"""
     if not cfg.ENABLE_EMAIL:
-        print("[邮件] 未配置，跳过推送")
+        print("[邮件] 未配置，跳过")
         return False
 
-    date_str = date_str or datetime.now().strftime("%Y-%m-%d")
+    body = f"""2026 年 5 月 22 日 AI 日报已生成。
+
+📊 模型 {section_counts.get('模型发布', 0)} · 产品 {section_counts.get('产品发布', 0)} · 行业 {section_counts.get('行业动态', 0)} · 论文 {section_counts.get('论文研究', 0)} · 观点 {section_counts.get('技巧观点', 0)}
+🏷️ AI HOT 精选 + arXiv 补充
+
+📎 {notion_url}
+
+⏰ 数据来源 AI HOT & arXiv"""
+    # Replace date in body dynamically
+    body = body.replace("2026 年 5 月 22 日", datetime.now().strftime("%Y 年 %-m 月 %-d 日"))
 
     try:
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"【AI 前沿日报 | {date_str}】"
+        msg["Subject"] = f"🤖 AI 晨报 · {date_str} — 共 {total} 条"
         msg["From"] = cfg.EMAIL_SENDER
         msg["To"] = cfg.EMAIL_RECEIVER
 
-        text_part = MIMEText(report_md, "plain", "utf-8")
-        html_report = _md_to_html(report_md)
-        html_part = MIMEText(html_report, "html", "utf-8")
+        text_part = MIMEText(body, "plain", "utf-8")
+        html_body = body.replace("\n", "<br>")
+        html_part = MIMEText(
+            f"<html><body style='font-family:sans-serif;padding:20px;line-height:1.8;'>{html_body}</body></html>",
+            "html", "utf-8"
+        )
         msg.attach(text_part)
         msg.attach(html_part)
 
@@ -39,7 +50,7 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
         server.login(cfg.EMAIL_SENDER, cfg.EMAIL_AUTH_CODE)
         server.sendmail(cfg.EMAIL_SENDER, cfg.EMAIL_RECEIVER, msg.as_string())
         server.quit()
-        print(f"[邮件] 日报已发送至 {cfg.EMAIL_RECEIVER} (via {cfg.EMAIL_SMTP_HOST})")
+        print(f"[邮件] 已发送至 {cfg.EMAIL_RECEIVER}")
         return True
     except Exception as e:
         print(f"[邮件] 发送失败: {e}")
@@ -47,57 +58,22 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
         return False
 
 
-def _md_to_html(md: str) -> str:
-    """将简单 Markdown 转为 HTML 邮件格式。"""
-    import re
+# ═══════════════════════════════════════
+# Notion API — 写入数据库
+# ═══════════════════════════════════════
 
-    html = md
-    # 标题
-    html = html.replace("# 【AI 前沿日报", '<h2 style="color:#1a73e8;">【AI 前沿日报')
-    html = html.replace("# ", "<h3>")
-    # 二级标题
-    html = html.replace("## ", '<h3 style="color:#333;border-bottom:1px solid #eee;padding-bottom:4px;">')
-    # 粗体
-    html = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html)
-    # 链接
-    html = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2" style="color:#1a73e8;">\1</a>', html)
-    # 引用
-    html = html.replace("> *", '<p style="color:#888;font-size:13px;"><em>')
-    # 列表
-    html = html.replace("- ", '<li style="margin:6px 0;">')
-    # 换行
-    html = html.replace("\n\n", "<br><br>")
-    html = html.replace("\n", "<br>")
-
-    return f"""<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:680px;margin:0 auto;padding:20px;line-height:1.7;color:#333;">
-{html}
-</body></html>"""
-
-
-# ═══════════════════════════════════════════════════════════════
-# Notion 推送
-# ═══════════════════════════════════════════════════════════════
-
-def send_via_notion(report_md: str, date_str: str = None) -> bool:
-    """通过 Notion API 将日报写入指定数据库。"""
+def send_via_notion(
+    date_str: str,
+    section_counts: dict,
+    total: int,
+    aihot_count: int,
+    self_count: int,
+    content_blocks: list[dict],
+) -> str | None:
+    """通过 Notion API 创建数据库页面。返回页面 URL。"""
     if not cfg.ENABLE_NOTION:
-        print("[Notion] 未配置，跳过推送")
-        return False
-
-    date_str = date_str or datetime.now().strftime("%Y-%m-%d")
-
-    payload = {
-        "parent": {"database_id": cfg.NOTION_DATABASE_ID},
-        "properties": {
-            "Name": {
-                "title": [{"text": {"content": f"AI 前沿日报 {date_str}"}}]
-            },
-            "Date": {
-                "date": {"start": date_str}
-            },
-        },
-        "children": _md_to_notion_blocks(report_md),
-    }
+        print("[Notion] 未配置，跳过")
+        return None
 
     headers = {
         "Authorization": f"Bearer {cfg.NOTION_API_KEY}",
@@ -105,72 +81,145 @@ def send_via_notion(report_md: str, date_str: str = None) -> bool:
         "Notion-Version": "2022-06-28",
     }
 
+    # 1. 创建页面
+    page_payload = {
+        "parent": {"database_id": cfg.NOTION_DATABASE_ID},
+        "properties": {
+            "标题": {
+                "title": [{"text": {"content": f"AI 晨报 · {date_str}"}}]
+            },
+            "日期": {
+                "date": {"start": date_str}
+            },
+            "总条数": {
+                "number": total
+            },
+            "模型发布": {
+                "number": section_counts.get("模型发布", 0)
+            },
+            "产品发布": {
+                "number": section_counts.get("产品发布", 0)
+            },
+            "行业动态": {
+                "number": section_counts.get("行业动态", 0)
+            },
+            "论文研究": {
+                "number": section_counts.get("论文研究", 0)
+            },
+            "技巧观点": {
+                "number": section_counts.get("技巧观点", 0)
+            },
+            "数据来源": {
+                "select": {"name": "多源聚合"}
+            },
+        },
+        "children": content_blocks,
+    }
+
     try:
         import requests
         r = requests.post(
             "https://api.notion.com/v1/pages",
-            json=payload,
+            json=page_payload,
             headers=headers,
             timeout=20,
         )
         r.raise_for_status()
-        page_url = r.json().get("url", "N/A")
-        print(f"[Notion] 日报已创建: {page_url}")
-        return True
+        page_url = r.json().get("url", "")
+        print(f"[Notion] 页面已创建: {page_url}")
+        return page_url
     except Exception as e:
-        print(f"[Notion] 推送失败: {e} | 响应: {getattr(e.response, 'text', 'N/A') if hasattr(e, 'response') else 'N/A'}")
+        detail = ""
+        if hasattr(e, "response") and e.response is not None:
+            detail = e.response.text[:500]
+        print(f"[Notion] 创建失败: {e} | {detail}")
         traceback.print_exc()
-        return False
+        return None
 
 
-def _md_to_notion_blocks(md: str) -> list[dict]:
-    """将 Markdown 切分为 Notion 块。简单分段处理。"""
-    blocks = []
-    lines = md.split("\n")
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith("# "):
-            blocks.append({
-                "object": "block",
-                "type": "heading_1",
-                "heading_1": {
-                    "rich_text": [{"type": "text", "text": {"content": line[2:]}}]
+def build_overview_block(total: int, section_counts: dict, aihot_count: int, self_count: int) -> dict:
+    """构建概览 callout 块。"""
+    parts = [f"共 {total} 条"]
+    for label, key in [
+        ("模型", "模型发布"), ("产品", "产品发布"),
+        ("行业", "行业动态"), ("论文", "论文研究"), ("观点", "技巧观点")
+    ]:
+        parts.append(f"{label} {section_counts.get(key, 0)}")
+    text = " | ".join(parts)
+
+    return {
+        "object": "block",
+        "type": "quote",
+        "quote": {
+            "rich_text": [
+                {"type": "text", "text": {"content": f"📊 今日概览 — {text}"}},
+                {"type": "text", "text": {"content": f"\n🏷️ AI HOT {aihot_count} 条 + arXiv 补充 {self_count} 条"}},
+            ]
+        },
+    }
+
+
+def build_section_heading(label: str) -> dict:
+    """构建版块标题块。"""
+    icons = {
+        "模型发布/更新": "🤖",
+        "产品发布/更新": "🚀",
+        "行业动态": "🌐",
+        "论文研究": "📄",
+        "技巧与观点": "💡",
+    }
+    return {
+        "object": "block",
+        "type": "heading_2",
+        "heading_2": {
+            "rich_text": [{"type": "text", "text": {"content": f"{icons.get(label, '')} {label}"}}]
+        },
+    }
+
+
+def build_item_block(num: int, item: dict, badge: str) -> dict:
+    """构建单条资讯 bullet 块（含子块：摘要 + 链接）。"""
+    title = item.get("title", "")
+    source = item.get("sourceName", "")
+    summary = item.get("summary", "")[:120]
+    url = item.get("sourceUrl", "")
+
+    return {
+        "object": "block",
+        "type": "bulleted_list_item",
+        "bulleted_list_item": {
+            "rich_text": [
+                {"type": "text", "text": {"content": f"{badge} "},
+                 "annotations": {"code": True, "color": "orange" if badge == "AI HOT" else "purple"}},
+                {"type": "text", "text": {"content": f"{num}. {title} — {source}"},
+                 "annotations": {"bold": True}},
+            ],
+            "children": [
+                {
+                    "object": "block",
+                    "type": "paragraph",
+                    "paragraph": {
+                        "rich_text": [{"type": "text", "text": {"content": summary}}]
+                    },
                 },
-            })
-        elif line.startswith("## "):
-            blocks.append({
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {
-                    "rich_text": [{"type": "text", "text": {"content": line[3:]}}]
+                {
+                    "object": "block",
+                    "type": "paragraph",
+                    "paragraph": {
+                        "rich_text": [
+                            {"type": "text", "text": {"content": "↗ 原文", "link": {"url": url}}}
+                        ]
+                    },
                 },
-            })
-        elif line.startswith("- "):
-            blocks.append({
-                "object": "block",
-                "type": "bulleted_list_item",
-                "bulleted_list_item": {
-                    "rich_text": [{"type": "text", "text": {"content": line[2:]}}]
-                },
-            })
-        elif line.startswith("> "):
-            blocks.append({
-                "object": "block",
-                "type": "quote",
-                "quote": {
-                    "rich_text": [{"type": "text", "text": {"content": line[2:]}}]
-                },
-            })
-        elif line.startswith("![") or (line.startswith("[") and "](" in line):
-            continue
-        else:
-            blocks.append({
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{"type": "text", "text": {"content": line}}]
-                },
-            })
-    return blocks
+            ],
+        },
+    }
+
+
+def build_footer(total: int) -> dict:
+    """构建文末分隔线 + 来源标注。"""
+    return {
+        "object": "block",
+        "type": "divider",
+        "divider": {},
+    }
