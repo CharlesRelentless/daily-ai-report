@@ -27,8 +27,8 @@ jobs:
       - name: Run Daily AI Report
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL || 'gpt-4o' }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL}}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL}}
           QQMAIL_SENDER: ${{ secrets.QQMAIL_SENDER }}
           QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
           QQMAIL_RECEIVER: ${{ secrets.QQMAIL_RECEIVER }}
