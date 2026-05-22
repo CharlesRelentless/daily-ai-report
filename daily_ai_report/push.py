@@ -3,6 +3,7 @@ AI 前沿捕手 Agent — 推送模块
 QQ邮箱 SMTP + Notion API 双通道推送。
 """
 import smtplib
+import traceback
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -21,19 +22,18 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
 
     date_str = date_str or datetime.now().strftime("%Y-%m-%d")
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"【AI 前沿日报 | {date_str}】"
-    msg["From"] = cfg.QQMAIL_SENDER
-    msg["To"] = cfg.QQMAIL_RECEIVER
-
-    # 纯文本 + HTML 双版本
-    text_part = MIMEText(report_md, "plain", "utf-8")
-    html_report = _md_to_html(report_md)
-    html_part = MIMEText(html_report, "html", "utf-8")
-    msg.attach(text_part)
-    msg.attach(html_part)
-
     try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"【AI 前沿日报 | {date_str}】"
+        msg["From"] = cfg.QQMAIL_SENDER
+        msg["To"] = cfg.QQMAIL_RECEIVER
+
+        text_part = MIMEText(report_md, "plain", "utf-8")
+        html_report = _md_to_html(report_md)
+        html_part = MIMEText(html_report, "html", "utf-8")
+        msg.attach(text_part)
+        msg.attach(html_part)
+
         server = smtplib.SMTP_SSL("smtp.qq.com", 465, timeout=15)
         server.login(cfg.QQMAIL_SENDER, cfg.QQMAIL_AUTH_CODE)
         server.sendmail(cfg.QQMAIL_SENDER, cfg.QQMAIL_RECEIVER, msg.as_string())
@@ -42,36 +42,35 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
         return True
     except Exception as e:
         print(f"[QQ邮箱] 发送失败: {e}")
+        traceback.print_exc()
         return False
 
 
 def _md_to_html(md: str) -> str:
     """将简单 Markdown 转为 HTML 邮件格式。"""
+    import re
+
     html = md
     # 标题
-    html = html.replace("# 【", '<h2 style="color:#1a73e8;">【')
+    html = html.replace("# 【AI 前沿日报", '<h2 style="color:#1a73e8;">【AI 前沿日报')
     html = html.replace("# ", "<h3>")
     # 二级标题
     html = html.replace("## ", '<h3 style="color:#333;border-bottom:1px solid #eee;padding-bottom:4px;">')
     # 粗体
-    import re
     html = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html)
     # 链接
-    html = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2" style="color:#1a73e8;">\1</a>", html')
+    html = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2" style="color:#1a73e8;">\1</a>', html)
     # 引用
     html = html.replace("> *", '<p style="color:#888;font-size:13px;"><em>')
-    html = html.replace("*</p>", "</em></p>") if html.endswith("*</p>") else html
     # 列表
     html = html.replace("- ", '<li style="margin:6px 0;">')
-    html = re.sub(r"(<li.*?</li>)", r"\1", html)  # no-op, just outline
     # 换行
     html = html.replace("\n\n", "<br><br>")
     html = html.replace("\n", "<br>")
 
-    wrapper = f"""<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:680px;margin:0 auto;padding:20px;line-height:1.7;color:#333;">
+    return f"""<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:680px;margin:0 auto;padding:20px;line-height:1.7;color:#333;">
 {html}
 </body></html>"""
-    return wrapper
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -118,7 +117,8 @@ def send_via_notion(report_md: str, date_str: str = None) -> bool:
         print(f"[Notion] 日报已创建: {page_url}")
         return True
     except Exception as e:
-        print(f"[Notion] 推送失败: {e}")
+        print(f"[Notion] 推送失败: {e} | 响应: {getattr(e.response, 'text', 'N/A') if hasattr(e, 'response') else 'N/A'}")
+        traceback.print_exc()
         return False
 
 
@@ -162,9 +162,8 @@ def _md_to_notion_blocks(md: str) -> list[dict]:
                     "rich_text": [{"type": "text", "text": {"content": line[2:]}}]
                 },
             })
-        elif line.startswith("![") or line.startswith("["):
-            # 跳过图片和链接行，纯文本已足够
-            pass
+        elif line.startswith("![") or (line.startswith("[") and "](" in line):
+            continue
         else:
             blocks.append({
                 "object": "block",
