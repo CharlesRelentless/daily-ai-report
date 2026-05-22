@@ -34,7 +34,8 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
         msg.attach(text_part)
         msg.attach(html_part)
 
-        server = smtplib.SMTP_SSL("smtp.qq.com", 465, timeout=15)
+        server = smtplib.SMTP("smtp.qq.com", 587, timeout=15)
+        server.starttls()
         server.login(cfg.QQMAIL_SENDER, cfg.QQMAIL_AUTH_CODE)
         server.sendmail(cfg.QQMAIL_SENDER, cfg.QQMAIL_RECEIVER, msg.as_string())
         server.quit()
