@@ -27,11 +27,13 @@ jobs:
       - name: Run Daily AI Report
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL}}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL}}
-          QQMAIL_SENDER: ${{ secrets.QQMAIL_SENDER }}
-          QQMAIL_AUTH_CODE: ${{ secrets.QQMAIL_AUTH_CODE }}
-          QQMAIL_RECEIVER: ${{ secrets.QQMAIL_RECEIVER }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          EMAIL_SMTP_HOST: ${{ secrets.EMAIL_SMTP_HOST }}
+          EMAIL_SMTP_PORT: ${{ secrets.EMAIL_SMTP_PORT }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           RESEARCH_KEYWORDS: ${{ secrets.RESEARCH_KEYWORDS }}

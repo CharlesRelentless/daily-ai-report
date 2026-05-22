@@ -15,9 +15,9 @@ from config import cfg
 # ═══════════════════════════════════════════════════════════════
 
 def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
-    """通过 QQ邮箱 SMTP 发送日报。"""
-    if not cfg.ENABLE_QQMAIL:
-        print("[QQ邮箱] 未配置，跳过推送")
+    """通过 SMTP 发送日报（支持 QQ邮箱 / Gmail / 任意 SMTP）。"""
+    if not cfg.ENABLE_EMAIL:
+        print("[邮件] 未配置，跳过推送")
         return False
 
     date_str = date_str or datetime.now().strftime("%Y-%m-%d")
@@ -25,8 +25,8 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"【AI 前沿日报 | {date_str}】"
-        msg["From"] = cfg.QQMAIL_SENDER
-        msg["To"] = cfg.QQMAIL_RECEIVER
+        msg["From"] = cfg.EMAIL_SENDER
+        msg["To"] = cfg.EMAIL_RECEIVER
 
         text_part = MIMEText(report_md, "plain", "utf-8")
         html_report = _md_to_html(report_md)
@@ -34,15 +34,15 @@ def send_via_qqmail(report_md: str, date_str: str = None) -> bool:
         msg.attach(text_part)
         msg.attach(html_part)
 
-        server = smtplib.SMTP("smtp.qq.com", 587, timeout=15)
+        server = smtplib.SMTP(cfg.EMAIL_SMTP_HOST, cfg.EMAIL_SMTP_PORT, timeout=15)
         server.starttls()
-        server.login(cfg.QQMAIL_SENDER, cfg.QQMAIL_AUTH_CODE)
-        server.sendmail(cfg.QQMAIL_SENDER, cfg.QQMAIL_RECEIVER, msg.as_string())
+        server.login(cfg.EMAIL_SENDER, cfg.EMAIL_AUTH_CODE)
+        server.sendmail(cfg.EMAIL_SENDER, cfg.EMAIL_RECEIVER, msg.as_string())
         server.quit()
-        print(f"[QQ邮箱] 日报已发送至 {cfg.QQMAIL_RECEIVER}")
+        print(f"[邮件] 日报已发送至 {cfg.EMAIL_RECEIVER} (via {cfg.EMAIL_SMTP_HOST})")
         return True
     except Exception as e:
-        print(f"[QQ邮箱] 发送失败: {e}")
+        print(f"[邮件] 发送失败: {e}")
         traceback.print_exc()
         return False
 

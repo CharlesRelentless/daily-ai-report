@@ -14,10 +14,12 @@ class Config:
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o")
 
-    # ─── QQ邮箱 ───
-    QQMAIL_SENDER: str = os.getenv("QQMAIL_SENDER", "")
-    QQMAIL_AUTH_CODE: str = os.getenv("QQMAIL_AUTH_CODE", "")
-    QQMAIL_RECEIVER: str = os.getenv("QQMAIL_RECEIVER", "")
+    # ─── 邮件推送（支持 QQ / Gmail / 任意 SMTP） ───
+    EMAIL_SMTP_HOST: str = os.getenv("EMAIL_SMTP_HOST", "smtp.gmail.com")
+    EMAIL_SMTP_PORT: int = int(os.getenv("EMAIL_SMTP_PORT", "587"))
+    EMAIL_SENDER: str = os.getenv("EMAIL_SENDER", "")
+    EMAIL_AUTH_CODE: str = os.getenv("EMAIL_AUTH_CODE", "")
+    EMAIL_RECEIVER: str = os.getenv("EMAIL_RECEIVER", "")
 
     # ─── Notion ───
     NOTION_API_KEY: str = os.getenv("NOTION_API_KEY", "")
@@ -44,7 +46,7 @@ class Config:
     ]
 
     # ─── 推送开关 ───
-    ENABLE_QQMAIL: bool = bool(QQMAIL_SENDER and QQMAIL_AUTH_CODE and QQMAIL_RECEIVER)
+    ENABLE_EMAIL: bool = bool(EMAIL_SENDER and EMAIL_AUTH_CODE and EMAIL_RECEIVER)
     ENABLE_NOTION: bool = bool(NOTION_API_KEY and NOTION_DATABASE_ID)
 
 
