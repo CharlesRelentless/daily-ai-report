@@ -26,7 +26,8 @@ def main():
     print("\n>>> 拉取 AI HOT 日报...")
     data = fetch_daily_report()
     if not data:
-        print("    获取失败，退出")
+        print("    获取失败，发送通知后退出")
+        _send_fallback_email(date_str)
         return
 
     actual_date = data.get("date", date_str)
@@ -61,6 +62,16 @@ def main():
     print(f"\n{'=' * 50}")
     print(f"  完成 | 邮件: {'✓' if ok else '✗'}")
     print("=" * 50)
+
+
+def _send_fallback_email(date_str: str):
+    """AI HOT 不可用时发送通知邮件。"""
+    html = f"""<html><body style="font-family:sans-serif;padding:24px;color:#333;">
+<h2 style="color:#e8552d;">AI 前沿日报 | {date_str}</h2>
+<p>今日 AI HOT 尚未生成日报或 API 不可用，自动重试将在明日 08:30 继续。</p>
+<p style="color:#999;font-size:12px;">AI 捕手 Agent</p>
+</body></html>"""
+    send_via_qqmail(html, date_str)
 
 
 if __name__ == "__main__":
