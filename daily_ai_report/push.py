@@ -74,7 +74,7 @@ def send_via_notion(
     if not cfg.ENABLE_NOTION:
         print("[Notion] 未配置")
         print(f"  NOTION_API_KEY 长度: {len(cfg.NOTION_API_KEY)}")
-        print(f"  NOTION_DATABASE_ID 长度: {len(cfg.NOTION_DATABASE_ID)}")
+        print("  NOTION_DATABASE_ID: 3690725a-bcba-811d-a5fc-db9d9fa62f6e (已内置)")
         return None
 
     headers = {
@@ -85,7 +85,7 @@ def send_via_notion(
 
     # 1. 创建页面
     page_payload = {
-        "parent": {"database_id": cfg.NOTION_DATABASE_ID},
+        "parent": {"database_id": "3690725a-bcba-811d-a5fc-db9d9fa62f6e"},
         "properties": {
             "标题": {
                 "title": [{"text": {"content": f"AI 晨报 · {date_str}"}}]
