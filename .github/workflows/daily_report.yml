@@ -2,8 +2,7 @@ name: AI 前沿日报
 
 on:
   schedule:
-    # 北京时间 08:30 = UTC 0:30，AI HOT 08:00 生成后推送
-    - cron: "30 0 * * *"
+    - cron: "30 0 * * *"   # BJT 08:30, 每天
   workflow_dispatch:
 
 jobs:
@@ -33,3 +32,15 @@ jobs:
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
         run: python daily_ai_report/main.py
+
+      - name: Generate HTML page
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        run: python daily_ai_report/htmlgen.py
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          force_orphan: true
