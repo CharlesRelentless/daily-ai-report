@@ -38,6 +38,13 @@ SECTION_KEY_MAP = {
 }
 
 
+
+# ── 诊断：检查环境变量 ──
+_ENVS = ['NOTION_API_KEY','NOTION_DATABASE_ID','EMAIL_SENDER','EMAIL_AUTH_CODE']
+for _e in _ENVS:
+    _v = __import__('os').environ.get(_e, '')
+    print(f'[诊断] {_e}: {"已设置" if _v else "未设置"} (长度 {len(_v)})')
+
 def main():
     dry_run = "--dry-run" in sys.argv
     now = datetime.now()

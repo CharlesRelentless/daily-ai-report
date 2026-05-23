@@ -72,7 +72,9 @@ def send_via_notion(
 ) -> str | None:
     """通过 Notion API 创建数据库页面。返回页面 URL。"""
     if not cfg.ENABLE_NOTION:
-        print("[Notion] 未配置，跳过")
+        print("[Notion] 未配置")
+        print(f"  NOTION_API_KEY 长度: {len(cfg.NOTION_API_KEY)}")
+        print(f"  NOTION_DATABASE_ID 长度: {len(cfg.NOTION_DATABASE_ID)}")
         return None
 
     headers = {
