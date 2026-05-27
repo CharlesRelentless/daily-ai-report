@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI 前沿日报 — HTML 生成器
-从 Notion 数据库回读最新日报，生成静态 HTML → GitHub Pages 部署。
+从 Notion 数据库回读最新日报 → 静态 HTML → GitHub Pages。
 """
 import os
 import requests
@@ -25,18 +25,28 @@ def get_latest_page():
     results = resp.json().get("results", [])
     if not results:
         raise RuntimeError("No pages in database")
-    page = results[0]
-    return page["id"], page.get("properties", {})
+    return results[0]["id"], results[0].get("properties", {})
 
 
 def get_page_blocks(page_id):
+    """获取页面所有块，并递归拉取子块。"""
+    blocks = _fetch_blocks(page_id)
+    # 递归获取子块
+    for b in blocks:
+        if b.get("has_children"):
+            b["children"] = _fetch_blocks(b["id"])
+    return blocks
+
+
+def _fetch_blocks(block_or_page_id):
+    """拉取某个 block/page 的所有直接子块。"""
     blocks, cursor = [], None
     while True:
         params = {"page_size": 100}
         if cursor:
             params["start_cursor"] = cursor
         resp = requests.get(
-            f"https://api.notion.com/v1/blocks/{page_id}/children",
+            f"https://api.notion.com/v1/blocks/{block_or_page_id}/children",
             params=params, headers=HEADERS,
         )
         resp.raise_for_status()
@@ -69,11 +79,11 @@ def block_to_html(block):
 
     if btype == "quote":
         text = "".join(t.get("plain_text", "") for t in rich_text)
-        return '<div class="overview">' + text.replace("\n", "<br>") + '</div>'
+        return f'<div class="overview">{text.replace(chr(10), "<br>")}</div>'
 
     if btype == "heading_2":
         text = "".join(t.get("plain_text", "") for t in rich_text)
-        return '<h2>' + text + '</h2>'
+        return f"<h2>{text}</h2>"
 
     if btype == "bulleted_list_item":
         parts = []
@@ -84,36 +94,36 @@ def block_to_html(block):
                 color = ann.get("color", "default")
                 parts.append(f'<span class="badge badge-{color}">{txt}</span>')
             elif ann.get("bold"):
-                parts.append(f'<span>{txt}</span>')
+                parts.append(f"<span>{txt}</span>")
             else:
                 parts.append(txt)
         main_html = "".join(parts).rstrip()
 
         children_html = ""
         children = block.get("children", [])
-        if children:
-            child_parts = []
-            for child in children:
-                cb = child.get(child.get("type", ""), {})
-                for c in cb.get("rich_text", []):
-                    ctext = c.get("plain_text", "")
-                    clink = c.get("text", {}).get("link")
-                    if clink and ctext.strip():
-                        child_parts.append(f'<a href="{clink["url"]}" target="_blank" rel="noopener">{ctext}</a>')
-                    else:
-                        child_parts.append(ctext)
-            if child_parts:
-                children_html = '<div class="item-detail">' + " . ".join(child_parts) + '</div>'
+        for child in children:
+            ctype = child.get("type", "")
+            cbody = child.get(ctype, {})
+            for c in cbody.get("rich_text", []):
+                ctext = c.get("plain_text", "")
+                link = c.get("text", {}).get("link")
+                if link and link.get("url"):
+                    children_html += f' <a href="{link["url"]}" target="_blank" rel="noopener">{ctext}</a>'
+                elif ctext.strip():
+                    children_html += ctext
+
+        if children_html.strip():
+            children_html = f'<div class="item-detail">{children_html.strip()}</div>'
 
         cls = "item" if children_html else "item no-detail"
         return f'<li class="{cls}">{main_html}{children_html}</li>'
 
     if btype == "paragraph":
         text = "".join(t.get("plain_text", "") for t in rich_text)
-        return f'<p>{text}</p>' if text.strip() else ""
+        return f"<p>{text}</p>" if text.strip() else ""
 
     if btype == "divider":
-        return '<hr>'
+        return "<hr>"
     return ""
 
 
@@ -202,14 +212,16 @@ def main():
     page_id, props = get_latest_page()
     stats = extract_stats(props)
     print(f"  {stats['title']} ({stats['date']}), 共 {stats['total']} 条")
-    print("[htmlgen] 获取页面 blocks...")
+
+    print("[htmlgen] 获取页面 blocks (含子块递归)...")
     blocks = get_page_blocks(page_id)
-    print(f"  共 {len(blocks)} 个 block")
+    print(f"  共 {len(blocks)} 个顶层 block")
+
     html = generate_html(blocks, stats)
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"[htmlgen] - public/index.html ({len(html)} bytes)")
+    print(f"[htmlgen] ✓ public/index.html ({len(html)} bytes)")
 
 
 if __name__ == "__main__":

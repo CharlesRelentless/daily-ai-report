@@ -34,7 +34,6 @@ jobs:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_AUTH_CODE: ${{ secrets.EMAIL_AUTH_CODE }}
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
-          EMAIL_CC: ${{ secrets.EMAIL_CC }}
         run: python daily_ai_report/main.py
 
       - name: Generate HTML page
