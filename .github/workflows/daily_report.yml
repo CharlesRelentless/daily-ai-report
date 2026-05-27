@@ -2,8 +2,11 @@ name: AI 前沿日报
 
 on:
   schedule:
-    - cron: "30 0 * * *"   # BJT 08:30, 每天
+    - cron: "30 0 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   daily-report:
