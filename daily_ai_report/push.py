@@ -1,5 +1,5 @@
 """AI 前沿日报 — 推送模块
-Notion API（主）+ QQ邮箱 SMTP（通知链接 + 网站链接）。
+Notion API（主）+ QQ邮箱 SMTP（通知链接 + 网站链接 + 多收件人）。
 """
 import smtplib
 import traceback
@@ -27,13 +27,15 @@ def send_via_qqmail(date_str: str, total: int, section_counts: dict, notion_url:
 
 ⏰ 数据来源 AI HOT & arXiv"""
 
-    recipients = cfg.EMAIL_RECEIVERS  # list of emails
+    all_recipients = cfg.EMAIL_ALL_RECIPIENTS
 
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"🤖 AI 晨报 · {date_str} — 共 {total} 条"
         msg["From"] = cfg.EMAIL_SENDER
-        msg["To"] = ", ".join(recipients)
+        msg["To"] = cfg.EMAIL_RECEIVER  # 主收件人
+        if cfg.EMAIL_CC:
+            msg["Cc"] = ", ".join(cfg.EMAIL_CC)
 
         text_part = MIMEText(body, "plain", "utf-8")
         html_body = body.replace("\n", "<br>")
@@ -47,9 +49,11 @@ def send_via_qqmail(date_str: str, total: int, section_counts: dict, notion_url:
         server = smtplib.SMTP(cfg.EMAIL_SMTP_HOST, cfg.EMAIL_SMTP_PORT, timeout=15)
         server.starttls()
         server.login(cfg.EMAIL_SENDER, cfg.EMAIL_AUTH_CODE)
-        server.sendmail(cfg.EMAIL_SENDER, recipients, msg.as_string())
+        server.sendmail(cfg.EMAIL_SENDER, all_recipients, msg.as_string())
         server.quit()
-        print(f"[邮件] 已发送至 {', '.join(recipients)}")
+
+        cc_info = f" + CC {', '.join(cfg.EMAIL_CC)}" if cfg.EMAIL_CC else ""
+        print(f"[邮件] 已发送至 {cfg.EMAIL_RECEIVER}{cc_info}")
         return True
     except Exception as e:
         print(f"[邮件] 发送失败: {e}")
@@ -69,7 +73,6 @@ def send_via_notion(
     self_count: int,
     content_blocks: list[dict],
 ) -> str | None:
-    """通过 Notion API 创建数据库页面。返回页面 URL。"""
     if not cfg.ENABLE_NOTION:
         print("[Notion] 未配置")
         print(f"  NOTION_API_KEY 长度: {len(cfg.NOTION_API_KEY)}")
@@ -85,45 +88,22 @@ def send_via_notion(
     page_payload = {
         "parent": {"database_id": "3690725a-bcba-811d-a5fc-db9d9fa62f6e"},
         "properties": {
-            "标题": {
-                "title": [{"text": {"content": f"AI 晨报 · {date_str}"}}]
-            },
-            "日期": {
-                "date": {"start": date_str}
-            },
-            "总条数": {
-                "number": total
-            },
-            "模型发布": {
-                "number": section_counts.get("模型发布", 0)
-            },
-            "产品发布": {
-                "number": section_counts.get("产品发布", 0)
-            },
-            "行业动态": {
-                "number": section_counts.get("行业动态", 0)
-            },
-            "论文研究": {
-                "number": section_counts.get("论文研究", 0)
-            },
-            "技巧观点": {
-                "number": section_counts.get("技巧观点", 0)
-            },
-            "数据来源": {
-                "select": {"name": "多源聚合"}
-            },
+            "标题": {"title": [{"text": {"content": f"AI 晨报 · {date_str}"}}]},
+            "日期": {"date": {"start": date_str}},
+            "总条数": {"number": total},
+            "模型发布": {"number": section_counts.get("模型发布", 0)},
+            "产品发布": {"number": section_counts.get("产品发布", 0)},
+            "行业动态": {"number": section_counts.get("行业动态", 0)},
+            "论文研究": {"number": section_counts.get("论文研究", 0)},
+            "技巧观点": {"number": section_counts.get("技巧观点", 0)},
+            "数据来源": {"select": {"name": "多源聚合"}},
         },
         "children": content_blocks,
     }
 
     try:
         import requests
-        r = requests.post(
-            "https://api.notion.com/v1/pages",
-            json=page_payload,
-            headers=headers,
-            timeout=20,
-        )
+        r = requests.post("https://api.notion.com/v1/pages", json=page_payload, headers=headers, timeout=20)
         r.raise_for_status()
         page_url = r.json().get("url", "")
         print(f"[Notion] 页面已创建: {page_url}")
@@ -139,10 +119,7 @@ def send_via_notion(
 
 def build_overview_block(total: int, section_counts: dict, aihot_count: int, self_count: int) -> dict:
     parts = [f"共 {total} 条"]
-    for label, key in [
-        ("模型", "模型发布"), ("产品", "产品发布"),
-        ("行业", "行业动态"), ("论文", "论文研究"), ("观点", "技巧观点")
-    ]:
+    for label, key in [("模型", "模型发布"), ("产品", "产品发布"), ("行业", "行业动态"), ("论文", "论文研究"), ("观点", "技巧观点")]:
         parts.append(f"{label} {section_counts.get(key, 0)}")
     text = " | ".join(parts)
     return {
@@ -158,17 +135,8 @@ def build_overview_block(total: int, section_counts: dict, aihot_count: int, sel
 
 
 def build_section_heading(label: str) -> dict:
-    icons = {
-        "模型发布/更新": "🤖", "产品发布/更新": "🚀",
-        "行业动态": "🌐", "论文研究": "📄", "技巧与观点": "💡",
-    }
-    return {
-        "object": "block",
-        "type": "heading_2",
-        "heading_2": {
-            "rich_text": [{"type": "text", "text": {"content": f"{icons.get(label, '')} {label}"}}]
-        },
-    }
+    icons = {"模型发布/更新": "🤖", "产品发布/更新": "🚀", "行业动态": "🌐", "论文研究": "📄", "技巧与观点": "💡"}
+    return {"object": "block", "type": "heading_2", "heading_2": {"rich_text": [{"type": "text", "text": {"content": f"{icons.get(label, '')} {label}"}}]}}
 
 
 def build_item_block(num: int, item: dict, badge: str) -> dict:
@@ -181,10 +149,8 @@ def build_item_block(num: int, item: dict, badge: str) -> dict:
         "type": "bulleted_list_item",
         "bulleted_list_item": {
             "rich_text": [
-                {"type": "text", "text": {"content": f"{badge} "},
-                 "annotations": {"code": True, "color": "orange" if badge == "AI HOT" else "purple"}},
-                {"type": "text", "text": {"content": f"{num}. {title} — {source}"},
-                 "annotations": {"bold": True}},
+                {"type": "text", "text": {"content": f"{badge} "}, "annotations": {"code": True, "color": "orange" if badge == "AI HOT" else "purple"}},
+                {"type": "text", "text": {"content": f"{num}. {title} — {source}"}, "annotations": {"bold": True}},
             ],
             "children": [
                 {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": summary}}]}},
