@@ -1,5 +1,5 @@
 """AI 前沿日报 — 推送模块
-Notion API（主）+ QQ邮箱 SMTP（通知链接）。
+Notion API（主）+ QQ邮箱 SMTP（通知链接 + 网站链接）。
 """
 import smtplib
 import traceback
@@ -8,33 +8,32 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from config import cfg
 
+WEBSITE_URL = "https://charlesrelentless.github.io/daily-ai-report/"
 
-# ═══════════════════════════════════════
-# QQ邮箱 — 发送 Notion 链接通知
-# ═══════════════════════════════════════
 
 def send_via_qqmail(date_str: str, total: int, section_counts: dict, notion_url: str) -> bool:
-    """发送一封极简通知邮件，只含统计 + Notion 链接。"""
+    """发送通知邮件，含统计 + Notion 链接 + 网站链接。"""
     if not cfg.ENABLE_EMAIL:
         print("[邮件] 未配置，跳过")
         return False
 
-    body = f"""2026 年 5 月 22 日 AI 日报已生成。
+    body = f"""日报网站 — {datetime.now().strftime('%Y 年 %-m 月 %-d 日')} AI 日报已生成。
 
 📊 模型 {section_counts.get('模型发布', 0)} · 产品 {section_counts.get('产品发布', 0)} · 行业 {section_counts.get('行业动态', 0)} · 论文 {section_counts.get('论文研究', 0)} · 观点 {section_counts.get('技巧观点', 0)}
 🏷️ AI HOT 精选 + arXiv 补充
 
-📎 {notion_url}
+📎 Notion: {notion_url}
+🌐 网站: {WEBSITE_URL}
 
 ⏰ 数据来源 AI HOT & arXiv"""
-    # Replace date in body dynamically
-    body = body.replace("2026 年 5 月 22 日", datetime.now().strftime("%Y 年 %-m 月 %-d 日"))
+
+    recipients = cfg.EMAIL_RECEIVERS  # list of emails
 
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"🤖 AI 晨报 · {date_str} — 共 {total} 条"
         msg["From"] = cfg.EMAIL_SENDER
-        msg["To"] = cfg.EMAIL_RECEIVER
+        msg["To"] = ", ".join(recipients)
 
         text_part = MIMEText(body, "plain", "utf-8")
         html_body = body.replace("\n", "<br>")
@@ -48,9 +47,9 @@ def send_via_qqmail(date_str: str, total: int, section_counts: dict, notion_url:
         server = smtplib.SMTP(cfg.EMAIL_SMTP_HOST, cfg.EMAIL_SMTP_PORT, timeout=15)
         server.starttls()
         server.login(cfg.EMAIL_SENDER, cfg.EMAIL_AUTH_CODE)
-        server.sendmail(cfg.EMAIL_SENDER, cfg.EMAIL_RECEIVER, msg.as_string())
+        server.sendmail(cfg.EMAIL_SENDER, recipients, msg.as_string())
         server.quit()
-        print(f"[邮件] 已发送至 {cfg.EMAIL_RECEIVER}")
+        print(f"[邮件] 已发送至 {', '.join(recipients)}")
         return True
     except Exception as e:
         print(f"[邮件] 发送失败: {e}")
@@ -83,7 +82,6 @@ def send_via_notion(
         "Notion-Version": "2022-06-28",
     }
 
-    # 1. 创建页面
     page_payload = {
         "parent": {"database_id": "3690725a-bcba-811d-a5fc-db9d9fa62f6e"},
         "properties": {
@@ -140,7 +138,6 @@ def send_via_notion(
 
 
 def build_overview_block(total: int, section_counts: dict, aihot_count: int, self_count: int) -> dict:
-    """构建概览 callout 块。"""
     parts = [f"共 {total} 条"]
     for label, key in [
         ("模型", "模型发布"), ("产品", "产品发布"),
@@ -148,7 +145,6 @@ def build_overview_block(total: int, section_counts: dict, aihot_count: int, sel
     ]:
         parts.append(f"{label} {section_counts.get(key, 0)}")
     text = " | ".join(parts)
-
     return {
         "object": "block",
         "type": "quote",
@@ -162,13 +158,9 @@ def build_overview_block(total: int, section_counts: dict, aihot_count: int, sel
 
 
 def build_section_heading(label: str) -> dict:
-    """构建版块标题块。"""
     icons = {
-        "模型发布/更新": "🤖",
-        "产品发布/更新": "🚀",
-        "行业动态": "🌐",
-        "论文研究": "📄",
-        "技巧与观点": "💡",
+        "模型发布/更新": "🤖", "产品发布/更新": "🚀",
+        "行业动态": "🌐", "论文研究": "📄", "技巧与观点": "💡",
     }
     return {
         "object": "block",
@@ -180,12 +172,10 @@ def build_section_heading(label: str) -> dict:
 
 
 def build_item_block(num: int, item: dict, badge: str) -> dict:
-    """构建单条资讯 bullet 块（含子块：摘要 + 链接）。"""
     title = item.get("title", "")
     source = item.get("sourceName", "")
     summary = item.get("summary", "")[:120]
     url = item.get("sourceUrl", "")
-
     return {
         "object": "block",
         "type": "bulleted_list_item",
@@ -197,31 +187,12 @@ def build_item_block(num: int, item: dict, badge: str) -> dict:
                  "annotations": {"bold": True}},
             ],
             "children": [
-                {
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [{"type": "text", "text": {"content": summary}}]
-                    },
-                },
-                {
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [
-                            {"type": "text", "text": {"content": "↗ 原文", "link": {"url": url}}}
-                        ]
-                    },
-                },
+                {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": summary}}]}},
+                {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "↗ 原文", "link": {"url": url}}}]}},
             ],
         },
     }
 
 
 def build_footer(total: int) -> dict:
-    """构建文末分隔线 + 来源标注。"""
-    return {
-        "object": "block",
-        "type": "divider",
-        "divider": {},
-    }
+    return {"object": "block", "type": "divider", "divider": {}}
