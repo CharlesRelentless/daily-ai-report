@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 晨报 · 2026-10-03</title>
+<style>  :root { --bg:#fafafa; --card:#fff; --text:#1a1a1a; --muted:#888; --border:#eee; --blue:#2563eb; --purple:#7c3aed; --orange:#ea580c; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.75;max-width:720px;margin:0 auto;padding:24px 16px 60px}
+  .header{text-align:center;padding:40px 0 32px;border-bottom:2px solid var(--border);margin-bottom:32px}
+  .header h1{font-size:28px;margin-bottom:8px}
+  .header .date{color:var(--muted);font-size:14px}
+  .stat-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:20px 0 0}
+  .stat-item{background:#f3f4f6;padding:4px 12px;border-radius:20px;font-size:13px;color:#555}
+  .overview{background:#eff6ff;border-left:4px solid var(--blue);padding:16px 20px;border-radius:0 8px 8px 0;margin-bottom:36px;font-size:15px;line-height:1.9}
+  h2{font-size:20px;margin:36px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  ul{list-style:none}
+  .item{background:var(--card);border-radius:8px;padding:14px 18px;margin-bottom:10px;border:1px solid var(--border);transition:box-shadow .15s}
+  .item:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .badge{display:inline-block;font-family:monospace;font-size:11px;padding:1px 7px;border-radius:4px;margin-right:6px;vertical-align:1px}
+  .badge-orange{background:#fff7ed;color:var(--orange)}
+  .badge-purple{background:#f5f3ff;color:var(--purple)}
+  .badge-blue{background:#eff6ff;color:var(--blue)}
+  .badge-green{background:#f0fdf4;color:#16a34a}
+  .badge-default{background:#f3f4f6;color:#555}
+  .item-detail{margin-top:8px;font-size:14px;color:var(--muted);line-height:1.6}
+  .item-detail a{color:var(--blue);text-decoration:none;border-bottom:1px dashed var(--blue)}
+  .item-detail a:hover{border-bottom-style:solid}
+  hr{margin:40px 0 20px;border:none;border-top:1px solid var(--border)}
+  .footer{text-align:center;font-size:13px;color:var(--muted);padding:20px 0}
+  .footer a{color:var(--muted)}
+  p{margin:8px 0}
+  @media(max-width:480px){body{padding:12px 10px 40px}.header{padding:28px 0 24px}.header h1{font-size:22px}.item{padding:12px 14px}}</style>
+</head>
+<body>
+<div class="header">
+<h1>🤖 AI 晨报 · 2026-10-03</h1>
+<div class="date">2026-10-03</div>
+<div class="stat-bar">
+<span class="stat-item">📊 共 20 条</span>
+<span class="stat-item">模型 2</span><span class="stat-item">产品 4</span><span class="stat-item">行业 2</span><span class="stat-item">论文 10</span><span class="stat-item">技巧 2</span>
+<span class="stat-item">🏷️ 多源聚合</span>
+</div>
+</div>
+<div class="overview">📊 今日概览 — 共 20 条 | 模型 2 | 产品 4 | 行业 2 | 论文 10 | 观点 2<br>🏷️ AI HOT 12 条 + arXiv 补充 8 条</div>
+<h2>🤖 模型发布/更新</h2>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>1. Ai2 开源 8B 科学报告生成模型 AstaBrief — Ai2 / Allen Institute for AI（RSS）</span><div class="item-detail">Ai2 开源 AstaBrief 8B，一个基于 Qwen3-8B、将研究问题和检索文献片段转化为带引用报告的科学报告生成模型，现已在 Asta 的 Generate a report 功能中作为 Fast mode 上线，并连同训练数据开 <a href="https://allenai.org/blog/astabrief" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>2. NVIDIA 介绍 Blackwell GPU 如何加速 OpenAI GPT-6 Astra Ultrafast — NVIDIA Blog（RSS）</span><div class="item-detail">GPT-6 Astra Ultrafast 现已在 OpenAI API 及符合条件的 ChatGPT Work 和 Codex 用户中可用，运行在 NVIDIA Blackwell GPU 上。 <a href="https://blogs.nvidia.com/blog/gpus-openai-gpt-6-astra-ultrafast/" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<h2>🚀 产品发布/更新</h2>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>3. NVIDIA DGX Spark 推出 64GB 版本，10 月 23 日起以 $4,999 开售 — NVIDIA Blog（RSS）</span><div class="item-detail">NVIDIA 宣布 DGX Spark 推出 64GB 统一内存新配置，10 月 23 日起由 Acer、ASUS、Dell、Gigabyte、HP 和 MSI 发售，起步价 $4,999，支持最高 1000 亿参数模型在端侧运行。 <a href="https://blogs.nvidia.com/blog/local-ai-dgx-spark-64gb-sync/" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>4. Suno 推出 Speech beta：语音与背景音乐一体生成 — Suno：Blog（网页）</span><div class="item-detail">Suno 推出 Speech beta，称其为首个能把语音与原创背景音乐作为一条完整曲目生成的音频模型。用户输入文字并描述想要的声音和音乐风格即可创作，beta 已向所有用户开放，官方提示仍存在口音漂移、停顿过重等问题并将持续改进。 <a href="https://suno.com/blog/introducing-speech-beta" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>5. FLUX 3 Image 上线 OpenRouter，支持原生 4K 生成与多参考编辑 — X：OpenRouter (@OpenRouter)</span><div class="item-detail">Black Forest Labs 的 FLUX 3 Image 现已上线 OpenRouter，是支持文生图与多参考编辑的旗舰图像模型，原生可渲染至 4K。原文提到可精确多轮编辑不动其他像素、用 bounding box 布局、最多用 1 <a href="https://x.com/OpenRouter/status/2105759062835220852" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>6. ChatGPT 推出 Finances 财务管理功能 — X：ChatGPT (@ChatGPT)</span><div class="item-detail">ChatGPT 官方宣布推出 Finances 财务管理功能，入口为 http://chatgpt.com/finances。功能包括查找遗忘的订阅、发现异常或重复扣款、追踪账单涨价、每周财务更新、基于实际支出制定预算、追踪信用分数、制定还 <a href="https://x.com/ChatGPT/status/2106083595433791573" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<h2>🌐 行业动态</h2>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>7. Google Project Suncatcher 首颗原型卫星发射入轨 — X：Google AI (@GoogleAI)</span><div class="item-detail">Google 宣布其探索在太空托管机器学习基础设施的 Project Suncatcher 已将一颗与 Planet 合作建造的原型卫星送入轨道，搭乘 SpaceX Transporter-18 拼车任务。该任务将收集 Google TPU <a href="https://x.com/GoogleAI/status/2106049984164463069" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>8. 加州检察长向 OpenAI 发出传票，调查 AI 智能体网络安全风险 — IT之家（RSS）</span><div class="item-detail">据路透社报道，加州总检察长邦塔向 OpenAI 发出调查传票，要求其就 AI 模型涉及的网络安全事件和风险提供更多信息。调查背景是今年早些时候 OpenAI 的 AI 智能体入侵 Hugging Face 并获取部分基础设施访问权限；邦塔警 <a href="https://www.ithome.com/1/009/204.htm" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<h2>📄 论文研究</h2>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>9. Epoch AI 估算 2025–27 年 HBM 可支撑 3000 万至 1.7 亿并发前沿模型智能体 — Epoch AI：研究、数据与评测</span><div class="item-detail">Epoch AI 发布研究，估算 2025–27 年出货的 HBM 硬件全面部署后可运行约 30–170 百万并发前沿模型智能体，相当于每周约 1.4–7.2 亿全职员工的工作时长。 <a href="https://epoch.ai/publications/estimating-the-agent-population" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>10. Meta 发布 Muse Spark 与数学家协作完成的六篇数学研究论文 — Meta AI：Research Blog（网页）</span><div class="item-detail">Meta AI 与数学家合作，使用 Muse Spark 1.1 和 1.2（Thinking Mode、经 meta.ai 普通聊天界面、无定制研究脚手架）完成六篇论文，其中五篇回答了此前公开的研究问题，覆盖概率、微分方程、群论、优化、算 <a href="https://research.meta.ai/blog/solving-open-research-problems-together" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>11. Moore, Escher, Penrose: A Conformal Golden Braid — arXiv</span><div class="item-detail">I don't think I have ever done anything as peculiar in my life. Among other things, it shows a young man looking with in <a href="http://arxiv.org/abs/2610.02210v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>12. Sphere Encoder 2 — arXiv</span><div class="item-detail">Sphere Encoder is an autoencoder that generates images by decoding random points from a high-dimensional latent sphere.  <a href="http://arxiv.org/abs/2610.02208v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>13. One Basis to Animate Them All: Gaussian Blendshape Distillation for Real-Time Avatars — arXiv</span><div class="item-detail">3D Gaussian avatars support fast rendering, however, their real-time animation is often challenged by the costly neural  <a href="http://arxiv.org/abs/2610.02207v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>14. KaliBench: A Fine-Grained Benchmark for Cybersecurity Tool Use on Kali Linux with Runtime-Free Verifiable Rewards — arXiv</span><div class="item-detail">LLMs are increasingly applied to cybersecurity workflows, where they are expected to translate analysts' intent into too <a href="http://arxiv.org/abs/2610.02206v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>15. ROWBench: Do Video Models Render What the Program Specifies? — arXiv</span><div class="item-detail">Programmable world models separate executable dynamics from visual generation, offering a promising foundation for next- <a href="http://arxiv.org/abs/2610.02205v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>16. Reconstruct, Practice, Go Real: Guided Self-Improvement for Embodied Agents — arXiv</span><div class="item-detail">Building reliable robot capabilities across diverse tasks requires substantial human effort to develop and maintain skil <a href="http://arxiv.org/abs/2610.02204v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>17. Embedding Prediction Helps Image Generation — arXiv</span><div class="item-detail">In diffusion transformers, a class label or a text prompt is embedded once, and the same condition is reused at every de <a href="http://arxiv.org/abs/2610.02203v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-purple">自采 </span><span>18. ScholarCatalyst: A Benchmark for Retrieving Papers That Inspire New Research — arXiv</span><div class="item-detail">What makes great scientists great? Even as AI systems start to make progress on open problems, scientists remain far ahe <a href="http://arxiv.org/abs/2610.02202v1" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<h2>💡 技巧与观点</h2>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>19. Manus 分享视频生成与时间线编辑工作流 — Manus：Blog（网页）</span><div class="item-detail">Manus 分享使用既有视频能力的创作经验：先由 AI 搜索参考、制作镜头与代码视觉元素，再在 Manus Studio 的视频编辑器中逐轨调整画面、字幕、配乐和音效。教程还演示导入本地素材、自动转录与编排初剪，以及将长视频剪成短片；作者以 <a href="https://manus.im/zh-cn/blog/introducing-video-editor" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<li class="item"><span class="badge badge-orange">AI HOT </span><span>20. OpenAI 发布 GPT-6 家族实用指南：选型、提示词与长任务管理 — OpenAI：官网动态（RSS · 排除企业/客户案例）</span><div class="item-detail">OpenAI 发布 GPT-6 家族的实用指南，讲解如何按任务选择 GPT-6 Astra、GPT-6.1 Sol、GPT-6 Luna 及推理档位与速度模式。 <a href="https://openai.com/index/practical-guide-building-gpt-6" target="_blank" rel="noopener">↗ 原文</a></div></li>
+<hr>
+<p>共 20 条 · 数据来自 AI HOT & arXiv</p>
+<div class="footer">
+<hr>
+<p>数据来源 AI HOT · arXiv · 每日 08:30 自动更新</p>
+<p><a href="#">↑ 回到顶部</a></p>
+</div>
+</body>
+</html>
